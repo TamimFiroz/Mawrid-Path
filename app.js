@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        fetch('/data/story.json')
+        fetch('story.json')
             .then(response => { if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`); return response.json(); })
             .then(data => {
                 const homeContainer = document.querySelector('.home-container');
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         const handleLanguageChange = (lang, buttonEl) => {
-            if (!currentStoryData) return;
+            if (!currentStoryData || currentLang === lang) return;
             currentLang = lang;
             const index = Array.from(langButtons).indexOf(buttonEl);
             if (glider) glider.style.transform = `translateX(${index * 100}%)`;
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        fetch('/data/story.json')
+        fetch('story.json')
             .then(response => response.json())
             .then(data => {
                 for (const arc of data.arcs) {
@@ -156,12 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             })
             .catch(error => { console.error('Error fetching story:', error); storyContentEl.innerHTML = '<h1>Error</h1><p>Could not load the story. Please try again later.</p>'; });
+        
+        initializePageTransitions();
     }
 });
 
 function initializeCardAnimations() {
     const cards = document.querySelectorAll('.card');
-    const maxRotation = 6; // Reduced for a more subtle effect
+    const maxRotation = 6;
     cards.forEach(card => {
         card.addEventListener('mousemove', (e) => {
             const rect = card.getBoundingClientRect();
@@ -179,14 +181,22 @@ function initializeCardAnimations() {
 }
 
 function initializePageTransitions() {
-    const cardLinks = document.querySelectorAll('.card');
+    const links = document.querySelectorAll('a.card, a.back-btn-creative');
     const mainContent = document.getElementById('main-content');
-    cardLinks.forEach(link => {
+    const storyContent = document.querySelector('.story-page .story-container');
+    
+    links.forEach(link => {
         link.addEventListener('click', (e) => {
+            if (link.hostname !== window.location.hostname || link.target === '_blank') {
+                return;
+            }
             e.preventDefault();
             const destination = link.href;
-            if (mainContent) {
-                mainContent.classList.add('page-fade-out');
+            let containerToFade = null;
+            if (mainContent) containerToFade = mainContent;
+            if (storyContent) containerToFade = storyContent;
+            if (containerToFade) {
+                containerToFade.classList.add('page-fade-out');
             }
             setTimeout(() => {
                 window.location.href = destination;
